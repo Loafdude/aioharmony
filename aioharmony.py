@@ -8,7 +8,7 @@ DEFAULT_HUB_PORT = 8088
 
 class HarmonyHub:
 
-    def __init__(self, ip_address):
+    def __init__(self, ip_address, loop):
         self._ip_address = ip_address
         self._friendly_name = None
         self._remote_id = None
@@ -19,10 +19,11 @@ class HarmonyHub:
         self._config = None
         self._activities = None
         self._devices = None
+        self._loop = loop
 
     async def connect(self):
         if self._remote_id is None:
-            self.retrieve_hub_info()
+            self._loop.run_until_complete(self.retrieve_hub_info())
 
         self._websocket = await websockets.connect(
             'ws://{}:{}/?domain=svcs.myharmony.com&hubId={}'.format(
@@ -75,7 +76,7 @@ class HarmonyHub:
 
 
 async def harmony_app():
-    hub = HarmonyHub(hub_ip)
+    hub = HarmonyHub(hub_ip, asyncio.get_event_loop())
     await hub.connect()
     asyncio.ensure_future(hub.listen_for_message())
 
