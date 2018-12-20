@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+from aiohttp import ClientSession
 
 hub_ip = "10.9.8.194"
 
@@ -20,6 +21,9 @@ class HarmonyHub:
         self._devices = None
 
     async def connect(self):
+        if self._remote_id is None:
+            self.retrieve_hub_info()
+
         self._websocket = await websockets.connect(
             'ws://{}:{}/?domain=svcs.myharmony.com&hubId={}'.format(
             self._ip_address, DEFAULT_HUB_PORT, self._remote_id
@@ -27,6 +31,29 @@ class HarmonyHub:
 
         # ToDo: Send message to hub and ensure connection is good.
         # ToDo: Check response, error if bad
+
+    async def retrieve_hub_info(self):
+        """Retrieve the harmony Hub information."""
+        url = 'http://{}:{}/'.format(self._ip_address, DEFAULT_HUB_PORT)
+        headers = {
+            'Origin': 'http://localhost.nebula.myharmony.com',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Accept-Charset': 'utf-8',
+        }
+        json_request = {
+            "id ": 1,
+            "cmd": "connect.discoveryinfo?get",
+            "params": {}
+        }
+        async with ClientSession() as session:
+            async with session.post(
+                url, json=json_request, headers=headers) as response:
+                json_response = await response.json()
+                self._friendly_name = json_response['data']['friendlyName']
+                self._remote_id = str(json_response['data']['remoteId'])
+                self._email = json_response['data']['email']
+                self._account_id = str(json_response['data']['accountId'])
 
     async def send(self, message):
         return await self._websocket.send(message)
