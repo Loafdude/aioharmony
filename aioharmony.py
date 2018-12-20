@@ -48,7 +48,7 @@ class HarmonyHub:
 
 
 async def harmony_app():
-    async with HarmonyHub() as hub:
+    async with HarmonyHub(hub_ip) as hub:
         await hub.connect()
         asyncio.ensure_future(hub.listen_for_message())
 
