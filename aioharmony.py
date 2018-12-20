@@ -3,12 +3,11 @@ import websockets
 from aiohttp import ClientSession
 
 hub_ip = "10.9.8.194"
-loop = asyncio.get_event_loop()
 DEFAULT_HUB_PORT = 8088
 
 class HarmonyHub:
 
-    def __init__(self, ip_address, loop):
+    def __init__(self, ip_address):
         self._ip_address = ip_address
         self._friendly_name = None
         self._remote_id = None
@@ -19,7 +18,7 @@ class HarmonyHub:
         self._config = None
         self._activities = None
         self._devices = None
-        self._loop = loop
+        self._loop = asyncio.get_event_loop()
 
     async def connect(self):
         if self._remote_id is None:
@@ -76,11 +75,12 @@ class HarmonyHub:
 
 
 async def harmony_app():
-    hub = HarmonyHub(hub_ip, loop)
+    hub = HarmonyHub(hub_ip)
     await hub.connect()
     asyncio.ensure_future(hub.listen())
 
 if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
     loop.run_until_complete(harmony_app())
     loop.run_forever()
 
